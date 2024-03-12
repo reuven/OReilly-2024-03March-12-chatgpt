@@ -52,28 +52,24 @@ def display_results(locations, results):
     console = Console()
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Metric", style="dim", width=28)
-
     for location in locations:
         table.add_column(location, justify="right")
-
     table.add_column("Difference", justify="right")
 
-    # Adding weather details for each location
+    # Add weather details for each location to the table
     for metric in results[locations[0]].keys():
         row = [metric]
         for location in locations:
             value = results[location][metric]
             row.append(f"{value:.2f}" if isinstance(value, float) else str(value))
-
-        # Difference (only for temperature and humidity)
-        if "Difference" in metric:
-            diff = results['Differences'][metric]
-            diff_str = f"[green]{diff:+.2f}[/green]" if diff > 0 else f"[red]{diff:+.2f}[/red]"
-            row.append(diff_str)
-        else:
-            row.append("")
-
+        row.append("")  # Placeholder for the difference column in this row
         table.add_row(*row)
+
+    # Add differences to the table
+    for metric, diff in results['Differences'].items():
+        if "Difference" in metric:
+            diff_str = f"[green]{diff:+.2f}[/green]" if diff > 0 else f"[red]{diff:+.2f}[/red]"
+            table.add_row(metric, "", "", diff_str)  # Adding a row for the difference
 
     console.print(table)
 
