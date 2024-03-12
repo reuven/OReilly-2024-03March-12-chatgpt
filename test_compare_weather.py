@@ -1,43 +1,57 @@
 import pytest
 import requests_mock
-from compare_weather import compare_weather, display_results  # Adjust the import based on your actual script name and location
+from compare_weather import compare_weather  # Adjust the import based on your actual script name and location
 
-@pytest.fixture
-def api_response1():
-    """Mock API response for location1."""
-    return {
-        "main": {
-            "temp": 20,
-            "humidity": 50,
-        },
-        "rain": {"1h": 2},
-        "snow": {"1h": 0}
-    }
+# Assuming compare_weather returns a dictionary with an 'Error' key in case of errors
 
-@pytest.fixture
-def api_response2():
-    """Mock API response for location2."""
-    return {
-        "main": {
-            "temp": 25,
-            "humidity": 60,
-        },
-        "rain": {"1h": 0},
-        "snow": {"1h": 1}
-    }
+def test_bad_location_name(requests_mock):
+    """Test handling of an invalid location name."""
+    requests_mock.get(requests_mock.ANY, status_code=404)  # Mocking a 404 response for any URL
 
-def test_compare_weather(requests_mock, api_response1, api_response2):
+    result = compare_weather("BadLocation1", "BadLocation2", "fake_key")
+    assert "Error" in result
+    assert "Failed to get weather data" in result["Error"]
+
+def test_api_error(requests_mock):
+    """Test handling of API errors, like network issues or server errors."""
+    requests_mock.get(requests_mock.ANY, status_code=500)  # Mocking a 500 Internal Server Error for any URL
+
+    result = compare_weather("Location1", "Location2", "fake_key")
+    assert "Error" in result
+    assert "Failed to get weather data" in result["Error"]
+
+def test_same_location(requests_mock, api_response1):
+    """Test entering the same location twice."""
+    requests_mock.get("http://api.openweathermap.org/data/2.5/weather?q=SameLocation&appid=fake_key&units=metric", json=api_response1)
+
+    result = compare_weather("SameLocation", "SameLocation", "fake_key")
+    # Depending on your implementation, this could be an error or simply show no differences
+    assert result["Differences"]["Temperature Difference (°C)"] == 0
+    assert result["Differences"]["Humidity Difference (%)"] == 0
+
+def test_partial_api_failure(requests_mock, api_response1):
+    """Test handling when one location is valid and the other is not."""
+    requests_mock.get("http://api.openweathermap.org/data/2.5/weather?q=GoodLocation&appid=fake_key&units=metric", json=api_response1)
+    requests_mock.get("http://api.openweathermap.org/data/2.5/weather?q=BadLocation&appid=fake_key&units=metric", status_code=404)
+
+    result = compare_weather("GoodLocation", "BadLocation", "fake_key")
+    assert "Error" in result
+    assert "Failed to get weather data for one or both locations" in result["Error"]
+
+def test_valid_data_handling(requests_mock, api_response1, api_response2):
+    """Test handling of valid data for two different locations."""
     requests_mock.get("http://api.openweathermap.org/data/2.5/weather?q=Location1&appid=fake_key&units=metric", json=api_response1)
     requests_mock.get("http://api.openweathermap.org/data/2.5/weather?q=Location2&appid=fake_key&units=metric", json=api_response2)
 
-    results = compare_weather("Location1", "Location2", "fake_key")
-    assert results["Location1"]["Temperature (°C)"] == 20
-    assert results["Location2"]["Temperature (°C)"] == 25
-    assert results["Differences"]["Temperature Difference (°C)"] == 5
-    # Add more assertions based on your function's return structure
+    result = compare_weather("Location1", "Location2", "fake_key")
+    assert "Location1" in result and "Location2" in result
+    assert "Differences" in result
+    # Ensure differences are calculated correctly
+    assert result["Differences"]["Temperature Difference (°C)"] == api_response2['main']['temp'] - api_response1['main']['temp']
 
-# Test for display_results might not be straightforward due to its nature of printing to the console
-# Instead, you could test individual components that contribute to what it displays, like data processing functions
+# Additional useful tests might include:
+# - Handling locations with no precipitation data (to ensure the function doesn't break when 'rain' or 'snow' keys are missing)
+# - Edge cases, like very small differences that might be rounded away in display
+# - Verifying the structure of the returned dictionary matches expectations (keys exist, values are of expected types)
 
-# Note: It's challenging to write a conventional test for `display_results` since it primarily deals with console output.
-# You might consider using the `capsys` fixture to capture print outputs if needed, but this can get complex with rich library outputs.
+# Note: Implementing these tests may require you to adjust the fixtures and mocks based on the actual responses and errors from OpenWeatherMap API.
