@@ -45,8 +45,15 @@ def compare_weather(location1, location2, api_key):
 
 # this will be run when I execute the program from the command line
 if __name__ == '__main__':
+    api_key = os.getenv('OPENWEATHER_API_KEY')  # Fetching API key from environment variable
+    if not api_key:
+        print("Please set the OPENWEATHER_API_KEY environment variable.")
+        exit(1)
+
     current_location = input('Current location: ').strip()
     destination_location = input('Destination location: ').strip()
 
-    compare_weather(current_location, destination_location,
-                    '75e28cf00906095c31dc005c0ca6c38f')
+    if not current_location or not destination_location:
+        print("Invalid input. Please enter valid locations.")
+    else:
+        compare_weather(current_location, destination_location, api_key)
