@@ -1,6 +1,6 @@
 import pytest
 import requests_mock
-from compare_weather_script_name import compare_weather, display_results  # Adjust the import based on your actual script name and location
+from compare_weather import compare_weather, display_results  # Adjust the import based on your actual script name and location
 
 @pytest.fixture
 def api_response1():
