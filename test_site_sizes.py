@@ -1,5 +1,6 @@
 import pytest
 import requests_mock
+import requests
 from site_sizes import fetch_url_size  # Adjust the import based on your actual script name and location
 
 def test_fetch_url_size_with_valid_content(requests_mock):
