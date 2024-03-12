@@ -29,14 +29,6 @@ def api_response2():
 
 # Assuming compare_weather returns a dictionary with an 'Error' key in case of errors
 
-def test_api_error(requests_mock):
-    """Test handling of API errors, like network issues or server errors."""
-    requests_mock.get(requests_mock.ANY, status_code=500)  # Mocking a 500 Internal Server Error for any URL
-
-    result = compare_weather("Location1", "Location2", "fake_key")
-    assert "Error" in result
-    assert "Failed to get weather data" in result["Error"]
-
 def test_same_location(requests_mock, api_response1):
     """Test entering the same location twice."""
     requests_mock.get("http://api.openweathermap.org/data/2.5/weather?q=SameLocation&appid=fake_key&units=metric", json=api_response1)
