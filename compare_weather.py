@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 
-import argparse
 import os
 import requests
+from argparse import ArgumentParser
+from rich.console import Console
+from rich.table import Table
 
 def compare_weather(location1, location2, api_key):
     base_url = "http://api.openweathermap.org/data/2.5/weather?q={}&appid={}&units=metric"
+    result = {}
 
     response1 = requests.get(base_url.format(location1, api_key))
     response2 = requests.get(base_url.format(location2, api_key))
-    result = {}
 
     if response1.status_code == 200 and response2.status_code == 200:
         weather1 = response1.json()
@@ -35,21 +37,42 @@ def compare_weather(location1, location2, api_key):
         snow_diff = precipitation2['snow'] - precipitation1['snow']
 
         result = {
-            "Temperature Difference": f"{temp_diff:.2f}°C",
-            "Humidity Difference": f"{humidity_diff}%",
-            "Rain Difference": f"{rain_diff}mm",
-            "Snow Difference": f"{snow_diff}mm"
+            "Temperature Difference (°C)": temp_diff,
+            "Humidity Difference (%)": humidity_diff,
+            "Rain Difference (mm)": rain_diff,
+            "Snow Difference (mm)": snow_diff
         }
     else:
         result["Error"] = "Failed to get weather data for one or both locations."
 
     return result
 
-def main():
-    parser = argparse.ArgumentParser(description="Compare weather between two locations.")
-    parser.add_argument("current_location", help="Your current location")
-    parser.add_argument("destination_location", help="Your destination location")
+def display_results(location1, location2, results):
+    console = Console()
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Metric", style="dim", width=28)
+    table.add_column(location1, justify="right")
+    table.add_column(location2, justify="right")
+    table.add_column("Difference", justify="right")
 
+    for key, value in results.items():
+        if "Difference" in key:
+            if value > 0:
+                value_str = f"[green]{value:+.2f}[/green]"
+            else:
+                value_str = f"[red]{value:+.2f}[/red]"
+        else:
+            value_str = str(value)
+
+        metric, unit = key.rsplit(" ", 1)
+        table.add_row(metric, "", "", f"{value_str} {unit}")
+
+    console.print(table)
+
+def main():
+    parser = ArgumentParser(description="Compare weather between two locations.")
+    parser.add_argument("location1", type=str, help="Current location")
+    parser.add_argument("location2", type=str, help="Destination location")
     args = parser.parse_args()
 
     api_key = os.getenv('OPENWEATHER_API_KEY')
@@ -57,11 +80,8 @@ def main():
         print("Please set the OPENWEATHER_API_KEY environment variable.")
         exit(1)
 
-    weather_comparison = compare_weather(args.current_location,
-                                         args.destination_location,
-                                         api_key)
-    for key, value in weather_comparison.items():
-        print(f"{key}: {value}")
+    weather_comparison = compare_weather(args.location1, args.location2, api_key)
+    display_results(args.location1, args.location2, weather_comparison)
 
 if __name__ == '__main__':
     main()
