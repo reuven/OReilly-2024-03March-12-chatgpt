@@ -1,4 +1,5 @@
 import pytest
+import requests
 import requests_mock
 from compare_weather import compare_weather  # Adjust the import based on your actual script name and location
 
