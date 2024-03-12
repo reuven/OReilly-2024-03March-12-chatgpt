@@ -17,55 +17,63 @@ def compare_weather(location1, location2, api_key):
         weather1 = response1.json()
         weather2 = response2.json()
 
-        temp_diff = weather2['main']['temp'] - weather1['main']['temp']
-        humidity_diff = weather2['main']['humidity'] - weather1['main']['humidity']
-
-        precipitation1 = {"rain": 0, "snow": 0}
-        precipitation2 = {"rain": 0, "snow": 0}
-
-        if 'rain' in weather1:
-            precipitation1['rain'] = weather1['rain'].get('1h', 0)
-        if 'rain' in weather2:
-            precipitation2['rain'] = weather2['rain'].get('1h', 0)
-
-        if 'snow' in weather1:
-            precipitation1['snow'] = weather1['snow'].get('1h', 0)
-        if 'snow' in weather2:
-            precipitation2['snow'] = weather2['snow'].get('1h', 0)
-
-        rain_diff = precipitation2['rain'] - precipitation1['rain']
-        snow_diff = precipitation2['snow'] - precipitation1['snow']
-
-        result = {
-            "Temperature Difference (°C)": temp_diff,
-            "Humidity Difference (%)": humidity_diff,
-            "Rain Difference (mm)": rain_diff,
-            "Snow Difference (mm)": snow_diff
+        # Individual weather details
+        weather_details1 = {
+            "Temperature (°C)": weather1['main']['temp'],
+            "Humidity (%)": weather1['main']['humidity'],
+            "Rain (mm)": weather1['rain']['1h'] if 'rain' in weather1 else 0,
+            "Snow (mm)": weather1['snow']['1h'] if 'snow' in weather1 else 0
         }
+
+        weather_details2 = {
+            "Temperature (°C)": weather2['main']['temp'],
+            "Humidity (%)": weather2['main']['humidity'],
+            "Rain (mm)": weather2['rain']['1h'] if 'rain' in weather2 else 0,
+            "Snow (mm)": weather2['snow']['1h'] if 'snow' in weather2 else 0
+        }
+
+        # Differences
+        result['Differences'] = {
+            "Temperature Difference (°C)": weather2['main']['temp'] - weather1['main']['temp'],
+            "Humidity Difference (%)": weather2['main']['humidity'] - weather1['main']['humidity'],
+            "Rain Difference (mm)": weather_details2["Rain (mm)"] - weather_details1["Rain (mm)"],
+            "Snow Difference (mm)": weather_details2["Snow (mm)"] - weather_details1["Snow (mm)"]
+        }
+
+        result[location1] = weather_details1
+        result[location2] = weather_details2
+
     else:
         result["Error"] = "Failed to get weather data for one or both locations."
 
     return result
 
-def display_results(location1, location2, results):
+def display_results(locations, results):
     console = Console()
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Metric", style="dim", width=28)
-    table.add_column(location1, justify="right")
-    table.add_column(location2, justify="right")
+
+    for location in locations:
+        table.add_column(location, justify="right")
+
     table.add_column("Difference", justify="right")
 
-    for key, value in results.items():
-        if "Difference" in key:
-            if value > 0:
-                value_str = f"[green]{value:+.2f}[/green]"
-            else:
-                value_str = f"[red]{value:+.2f}[/red]"
-        else:
-            value_str = str(value)
+    # Adding weather details for each location
+    for metric in results[locations[0]].keys():
+        row = [metric]
+        for location in locations:
+            value = results[location][metric]
+            row.append(f"{value:.2f}" if isinstance(value, float) else str(value))
 
-        metric, unit = key.rsplit(" ", 1)
-        table.add_row(metric, "", "", f"{value_str} {unit}")
+        # Difference (only for temperature and humidity)
+        if "Difference" in metric:
+            diff = results['Differences'][metric]
+            diff_str = f"[green]{diff:+.2f}[/green]" if diff > 0 else f"[red]{diff:+.2f}[/red]"
+            row.append(diff_str)
+        else:
+            row.append("")
+
+        table.add_row(*row)
 
     console.print(table)
 
@@ -81,7 +89,7 @@ def main():
         exit(1)
 
     weather_comparison = compare_weather(args.location1, args.location2, api_key)
-    display_results(args.location1, args.location2, weather_comparison)
+    display_results([args.location1, args.location2], weather_comparison)
 
 if __name__ == '__main__':
     main()
