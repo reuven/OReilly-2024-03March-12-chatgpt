@@ -2,6 +2,7 @@
 
 import requests
 from argparse import ArgumentParser
+from rich import Console, Table
 
 def fetch_url_size(url):
     """Fetches the content length of the given URL."""
