@@ -44,19 +44,23 @@ def compare_weather(location1, location2, api_key):
 
     return result
 
-# this will be run when I execute the program from the command line
-if __name__ == '__main__':
+def main():
+    parser = argparse.ArgumentParser(description="Compare weather between two locations.")
+    parser.add_argument("current_location", help="Your current location")
+    parser.add_argument("destination_location", help="Your destination location")
+
+    args = parser.parse_args()
+
     api_key = os.getenv('OPENWEATHER_API_KEY')
     if not api_key:
         print("Please set the OPENWEATHER_API_KEY environment variable.")
         exit(1)
 
-    current_location = input('Current location: ').strip()
-    destination_location = input('Destination location: ').strip()
+    weather_comparison = compare_weather(args.current_location,
+                                         args.destination_location,
+                                         api_key)
+    for key, value in weather_comparison.items():
+        print(f"{key}: {value}")
 
-    if not current_location or not destination_location:
-        print("Invalid input. Please enter valid locations.")
-    else:
-        weather_comparison = compare_weather(current_location, destination_location, api_key)
-        for key, value in weather_comparison.items():
-            print(f"{key}: {value}")
+if __name__ == '__main__':
+    main()
