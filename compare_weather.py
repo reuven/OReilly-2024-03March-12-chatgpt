@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import requests
 
 def compare_weather(location1, location2, api_key):
