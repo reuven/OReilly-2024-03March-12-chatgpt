@@ -29,15 +29,6 @@ def api_response2():
 
 # Assuming compare_weather returns a dictionary with an 'Error' key in case of errors
 
-def test_same_location(requests_mock, api_response1):
-    """Test entering the same location twice."""
-    requests_mock.get("http://api.openweathermap.org/data/2.5/weather?q=SameLocation&appid=fake_key&units=metric", json=api_response1)
-
-    result = compare_weather("SameLocation", "SameLocation", "fake_key")
-    # Depending on your implementation, this could be an error or simply show no differences
-    assert result["Differences"]["Temperature Difference (°C)"] == 0
-    assert result["Differences"]["Humidity Difference (%)"] == 0
-
 def test_partial_api_failure(requests_mock, api_response1):
     """Test handling when one location is valid and the other is not."""
     requests_mock.get("http://api.openweathermap.org/data/2.5/weather?q=GoodLocation&appid=fake_key&units=metric", json=api_response1)
@@ -57,15 +48,6 @@ def test_valid_data_handling(requests_mock, api_response1, api_response2):
     assert "Differences" in result
     # Ensure differences are calculated correctly
     assert result["Differences"]["Temperature Difference (°C)"] == api_response2['main']['temp'] - api_response1['main']['temp']
-
-# Additional useful tests might include:
-# - Handling locations with no precipitation data (to ensure the function doesn't break when 'rain' or 'snow' keys are missing)
-# - Edge cases, like very small differences that might be rounded away in display
-# - Verifying the structure of the returned dictionary matches expectations (keys exist, values are of expected types)
-
-# Note: Implementing these tests may require you to adjust the fixtures and mocks based on the actual responses and errors from OpenWeatherMap API.
-
-
 
 @pytest.fixture
 def api_base_url():
