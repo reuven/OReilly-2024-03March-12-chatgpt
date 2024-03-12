@@ -18,9 +18,22 @@ def main():
     parser.add_argument('urls', nargs='+', help='One or more URLs to fetch')
     args = parser.parse_args()
 
+    console = Console()
+    table = Table(show_header=True, header_style="bold blue")
+    table.add_column("URL", style="dim", width=50)
+    table.add_column("Size / Error")
+
     for url in args.urls:
         size = fetch_url_size(url)
-        print(f"{url}: {size} bytes")
+        if isinstance(size, int):
+            # Format the size with commas
+            size_formatted = f"{size:,} bytes"
+        else:
+            size_formatted = size  # Error message
+
+        table.add_row(url, size_formatted)
+
+    console.print(table)
 
 if __name__ == '__main__':
     main()
