@@ -2,6 +2,31 @@ import pytest
 import requests_mock
 from compare_weather import compare_weather  # Adjust the import based on your actual script name and location
 
+@pytest.fixture
+def api_response1():
+    """Mock API response for location1."""
+    return {
+        "main": {
+            "temp": 20,
+            "humidity": 50,
+        },
+        "rain": {"1h": 2},
+        "snow": {"1h": 0}
+    }
+
+@pytest.fixture
+def api_response2():
+    """Mock API response for location2."""
+    return {
+        "main": {
+            "temp": 25,
+            "humidity": 60,
+        },
+        "rain": {"1h": 0},
+        "snow": {"1h": 1}
+    }
+
+
 # Assuming compare_weather returns a dictionary with an 'Error' key in case of errors
 
 def test_bad_location_name(requests_mock):
