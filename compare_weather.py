@@ -40,3 +40,11 @@ def compare_weather(location1, location2, api_key):
 
     else:
         print("Failed to get weather data for one or both locations.")
+
+# this will be run when I execute the program from the command line
+if __name__ == '__main__':
+    current_location = input('Current location: ').strip()
+    destination_location = input('Destination location: ').strip()
+
+    compare_weather(current_location, destination_location,
+                    '75e28cf00906095c31dc005c0ca6c38f')
